@@ -1,4 +1,4 @@
-"""分发任务领域服务：管理把发布版本分发给订阅方的批次调度、送达确认与失败重试。
+"""分发任务领域服务：管理把发布版本分发给订阅方的批次调度、送达确认与失败重试，完成导出动作。
 
 数据链路位置：主数据分发层执行端，负责消费发布版本与订阅过滤，
 把送达回执写入回执中心。
@@ -15,7 +15,7 @@ from app.store import store
 class DistTaskService(BaseModuleService):
     MODULE = "dist_task"
     ENTITY = "分发批次"
-    OPERATION_TERM = "分发"
+    OPERATION_TERM = "导出"
     LIST_FIELDS = ["分发批次", "订阅方", "记录范围", "分发状态", "回执状态"]
     REQUIRED_FIELDS = ["分发批次", "订阅方", "记录范围"]
     STATUS_ORDER = ["排队中", "分发中", "已送达", "分发失败"]

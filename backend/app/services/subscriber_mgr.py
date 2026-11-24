@@ -1,4 +1,4 @@
-"""下游订阅方领域服务：管理下游系统对金记录版本的订阅关系、过滤条件与生效状态。
+"""下游订阅方领域服务：管理下游系统对金记录版本的订阅关系、过滤条件与生效状态，完成导入动作。
 
 数据链路位置：主数据分发层的消费端配置，负责消费发布版本，
 按订阅过滤生成分发批次并衔接回执通道。
@@ -15,7 +15,7 @@ from app.store import store
 class SubscriberMgrService(BaseModuleService):
     MODULE = "subscriber_mgr"
     ENTITY = "订阅方"
-    OPERATION_TERM = "订阅"
+    OPERATION_TERM = "导入"
     LIST_FIELDS = ["订阅方标识", "订阅实体", "分发格式", "订阅过滤", "生效状态"]
     REQUIRED_FIELDS = ["订阅方标识", "订阅实体", "分发格式"]
     STATUS_ORDER = ["待生效", "已生效", "已暂停"]

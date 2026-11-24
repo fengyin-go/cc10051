@@ -1,4 +1,4 @@
-"""金记录发布领域服务：管理金记录版本的发布批次、版本标识、扇出分发与回滚衔接。
+"""金记录发布领域服务：管理金记录版本的发布批次、版本标识、扇出分发与回滚衔接，完成入库动作。
 
 数据链路位置：主数据发布层，负责消费合并产物，把发布版本
 扇出给订阅方并衔接版本回滚任务。
@@ -15,7 +15,7 @@ from app.store import store
 class GoldenPublishService(BaseModuleService):
     MODULE = "golden_publish"
     ENTITY = "发布批次"
-    OPERATION_TERM = "发布"
+    OPERATION_TERM = "入库"
     LIST_FIELDS = ["发布批次", "实体编码", "金记录数", "发布时间", "版本标识"]
     REQUIRED_FIELDS = ["发布批次", "实体编码", "金记录数"]
     STATUS_ORDER = ["待发布", "已发布", "已回滚"]

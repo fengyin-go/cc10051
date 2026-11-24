@@ -1,4 +1,4 @@
-"""版本回滚器领域服务：管理发布版本回滚任务的执行、影响订阅方通知与取消恢复。
+"""版本回滚器领域服务：管理发布版本回滚任务的执行、影响订阅方通知与取消恢复，完成迁移动作。
 
 数据链路位置：发布层逆向通道，负责消费发布历史与分发记录，
 把回滚结果通知订阅方并登记回执。
@@ -15,7 +15,7 @@ from app.store import store
 class VersionRollbackService(BaseModuleService):
     MODULE = "version_rollback"
     ENTITY = "回滚任务"
-    OPERATION_TERM = "回滚"
+    OPERATION_TERM = "迁移"
     LIST_FIELDS = ["回滚任务", "目标版本", "回滚原因", "执行状态", "影响订阅方"]
     REQUIRED_FIELDS = ["回滚任务", "目标版本", "回滚原因"]
     STATUS_ORDER = ["待执行", "已回滚", "回滚失败"]
