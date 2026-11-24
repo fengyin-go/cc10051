@@ -1,15 +1,111 @@
-"""__NAME__领域服务：字段、状态和动作来自业务配置，数据处理骨架由基类复用。"""
+"""下游订阅方领域服务：管理下游系统对金记录版本的订阅关系、过滤条件与生效状态。
+
+数据链路位置：主数据分发层的消费端配置，负责消费发布版本，
+按订阅过滤生成分发批次并衔接回执通道。
+"""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from typing import Any
+
 from app.services.base import BaseModuleService
+from app.store import store
 
 
 class SubscriberMgrService(BaseModuleService):
     MODULE = "subscriber_mgr"
     ENTITY = "订阅方"
-    OPERATION_TERM = "校验"
+    OPERATION_TERM = "订阅"
     LIST_FIELDS = ["订阅方标识", "订阅实体", "分发格式", "订阅过滤", "生效状态"]
     REQUIRED_FIELDS = ["订阅方标识", "订阅实体", "分发格式"]
     STATUS_ORDER = ["待生效", "已生效", "已暂停"]
     ACTION_RULES = {"生效订阅": "已生效", "暂停订阅": "已暂停"}
     NEGATIVE_ACTIONS = []
+
+    # ---- 业务扩展：订阅生效与分发过滤 ----
+
+    def activate_subscription(self, entry_id: int) -> dict[str, Any]:
+        """生效订阅并把订阅方加入分发名单。"""
+        entry = store.find(self.MODULE, entry_id)
+        if entry is None:
+            return {"ok": False, "message": "订阅方不存在"}
+        if not str(entry.get("分发格式", "")).strip():
+            return {"ok": False, "message": "分发格式缺失，不能生效"}
+        entry["status"] = "已生效"
+        entry["pending"] = False
+        return {"ok": True, "subscriber": entry.get("订阅方标识")}
+
+    def apply_filter(self, entry_id: int, publish_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """按订阅过滤条件筛选发布记录。"""
+        entry = store.find(self.MODULE, entry_id)
+        if entry is None or entry.get("status") != "已生效":
+            return []
+        cond = str(entry.get("订阅过滤", "")).strip()
+        if not cond:
+            return publish_rows
+        field, _, expected = cond.partition("=")
+        return [r for r in publish_rows if str(r.get(field, "")) == expected]
+
+    def pause_and_recall(self, entry_id: int) -> dict[str, Any]:
+        """暂停订阅并回收未送达的分发批次。"""
+        entry = store.find(self.MODULE, entry_id)
+        if entry is None:
+            return {"ok": False, "message": "订阅方不存在"}
+        entry["status"] = "已暂停"
+        entry["pending"] = True
+        recalled = 0
+        for task in store.rows("dist_task"):
+            if task.get("订阅方") == entry.get("订阅方标识") and task.get("status") == "排队中":
+                task["status"] = "分发失败"
+                task["abnormal"] = True
+                recalled += 1
+        return {"ok": True, "recalled_tasks": recalled}
+
+    def consume_publish_versions(self, entry_id: int) -> list[str]:
+        """读取订阅实体的已发布版本列表。"""
+        entry = store.find(self.MODULE, entry_id)
+        if entry is None:
+            return []
+        entity = str(entry.get("订阅过滤", "")).partition("=")[2] or entry.get("订阅实体", "")
+        return [p.get("版本标识", "") for p in store.rows("golden_publish")
+                if p.get("status") == "已发布" and entity in str(p.get("实体编码", ""))]
+
+    def produce_dist_batch(self, entry_id: int, version: str) -> int:
+        """为订阅方生成分发批次，写入 dist_task。"""
+        entry = store.find(self.MODULE, entry_id)
+        if entry is None:
+            return 0
+        tasks = store.rows("dist_task")
+        task_id = max((int(r.get("id", 0)) for r in tasks), default=0) + 1
+        tasks.append({
+            "id": task_id,
+            "分发批次": f"dist-{entry.get('订阅方标识')}-{task_id}",
+            "订阅方": entry.get("订阅方标识", ""),
+            "记录范围": f"版本 {version}",
+            "分发状态": "排队中",
+            "回执状态": "未回收",
+            "status": "排队中",
+            "pending": True,
+            "abnormal": False,
+        })
+        return task_id
+
+    def ensure_receipt_collector(self, entry_id: int) -> dict[str, Any]:
+        """确认订阅方回执通道可用，登记到回执中心。"""
+        entry = store.find(self.MODULE, entry_id)
+        if entry is None:
+            return {"ok": False, "message": "订阅方不存在"}
+        receipts = store.rows("dist_receipt")
+        receipt_id = max((int(r.get("id", 0)) for r in receipts), default=0) + 1
+        receipts.append({
+            "id": receipt_id,
+            "回执编号": f"rc-{entry.get('订阅方标识')}-{receipt_id}",
+            "分发批次": "",
+            "订阅方": entry.get("订阅方标识", ""),
+            "回执状态": "未回收",
+            "差异说明": "通道注册",
+            "status": "未回收",
+            "pending": True,
+            "abnormal": False,
+        })
+        return {"ok": True, "receipt_id": receipt_id}
