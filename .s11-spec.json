@@ -1,0 +1,679 @@
+{
+  "id": "cc10051",
+  "domain": "数据工程",
+  "subdirection": "数仓与数据湖",
+  "app_name": "主数据治理与参考数据管理平台",
+  "app_slug": "master-data-governor",
+  "app_desc": "覆盖主数据抽取、标准化清洗、去重合并、金记录发布与下游订阅分发的治理平台",
+  "frontend": "vue",
+  "backend": "python",
+  "port_frontend": 5201,
+  "port_backend": 8021,
+  "modules": [
+    {
+      "key": "source_system",
+      "name": "源系统登记",
+      "entity": "源系统",
+      "fields": [
+        "系统标识",
+        "系统名称",
+        "数据域",
+        "同步频率",
+        "责任人"
+      ],
+      "statuses": [
+        "待接入",
+        "已接入",
+        "已停用"
+      ],
+      "actions": [
+        "接入系统",
+        "停用系统"
+      ],
+      "action_targets": [
+        "已接入",
+        "已停用"
+      ],
+      "metrics": [
+        "系统总数",
+        "已接入系统",
+        "停用系统"
+      ],
+      "desc": "登记主数据的来源系统与责任边界",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "entity_model",
+      "name": "主数据实体",
+      "entity": "实体定义",
+      "fields": [
+        "实体编码",
+        "实体名称",
+        "唯一键规则",
+        "合并策略",
+        "版本号"
+      ],
+      "statuses": [
+        "草稿",
+        "已发布",
+        "已废弃"
+      ],
+      "actions": [
+        "发布实体",
+        "废弃实体"
+      ],
+      "action_targets": [
+        "已发布",
+        "已废弃"
+      ],
+      "metrics": [
+        "实体总数",
+        "发布实体",
+        "版本总数"
+      ],
+      "desc": "定义主数据实体的唯一键与合并策略",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "record_extract",
+      "name": "记录抽取作业",
+      "entity": "抽取作业",
+      "fields": [
+        "作业名称",
+        "源系统",
+        "实体编码",
+        "抽取范围",
+        "游标位置"
+      ],
+      "statuses": [
+        "待执行",
+        "执行中",
+        "已完成",
+        "抽取失败"
+      ],
+      "actions": [
+        "启动作业",
+        "重试抽取"
+      ],
+      "action_targets": [
+        "执行中",
+        "抽取失败"
+      ],
+      "metrics": [
+        "作业总数",
+        "完成作业",
+        "失败作业"
+      ],
+      "desc": "按游标从源系统抽取主数据记录",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "std_cleanse",
+      "name": "标准化清洗",
+      "entity": "清洗规则",
+      "fields": [
+        "规则名称",
+        "实体编码",
+        "清洗阶段",
+        "规则表达式",
+        "异常处理"
+      ],
+      "statuses": [
+        "草稿",
+        "已启用",
+        "已停用"
+      ],
+      "actions": [
+        "启用规则",
+        "停用规则"
+      ],
+      "action_targets": [
+        "已启用",
+        "已停用"
+      ],
+      "metrics": [
+        "规则总数",
+        "启用规则",
+        "清洗记录数"
+      ],
+      "desc": "对主数据记录执行标准化清洗",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "dup_detect",
+      "name": "重复检测器",
+      "entity": "检测结果",
+      "fields": [
+        "检测批次",
+        "实体编码",
+        "候选组数",
+        "相似度算法",
+        "置信区间"
+      ],
+      "statuses": [
+        "检测中",
+        "已完成",
+        "检测失败"
+      ],
+      "actions": [
+        "开始检测",
+        "重试检测"
+      ],
+      "action_targets": [
+        "已完成",
+        "检测失败"
+      ],
+      "metrics": [
+        "批次总数",
+        "完成批次",
+        "候选组总数"
+      ],
+      "desc": "识别疑似重复的主数据记录组",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "golden_merge",
+      "name": "金记录合并",
+      "entity": "合并任务",
+      "fields": [
+        "合并任务",
+        "实体编码",
+        "候选组",
+        "生还规则",
+        "合并结果"
+      ],
+      "statuses": [
+        "待合并",
+        "已合并",
+        "合并冲突"
+      ],
+      "actions": [
+        "执行合并",
+        "转人工"
+      ],
+      "action_targets": [
+        "已合并",
+        "合并冲突"
+      ],
+      "metrics": [
+        "任务总数",
+        "已合并",
+        "冲突任务"
+      ],
+      "desc": "按生还规则把重复组合并为金记录",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "golden_publish",
+      "name": "金记录发布",
+      "entity": "发布批次",
+      "fields": [
+        "发布批次",
+        "实体编码",
+        "金记录数",
+        "发布时间",
+        "版本标识"
+      ],
+      "statuses": [
+        "待发布",
+        "已发布",
+        "已回滚"
+      ],
+      "actions": [
+        "发布批次",
+        "回滚批次"
+      ],
+      "action_targets": [
+        "已发布",
+        "已回滚"
+      ],
+      "metrics": [
+        "批次总数",
+        "已发布批次",
+        "今日发布记录"
+      ],
+      "desc": "把金记录按版本发布给下游",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "subscriber_mgr",
+      "name": "下游订阅方",
+      "entity": "订阅方",
+      "fields": [
+        "订阅方标识",
+        "订阅实体",
+        "分发格式",
+        "订阅过滤",
+        "生效状态"
+      ],
+      "statuses": [
+        "待生效",
+        "已生效",
+        "已暂停"
+      ],
+      "actions": [
+        "生效订阅",
+        "暂停订阅"
+      ],
+      "action_targets": [
+        "已生效",
+        "已暂停"
+      ],
+      "metrics": [
+        "订阅方总数",
+        "生效订阅",
+        "今日分发"
+      ],
+      "desc": "管理下游系统对金记录的订阅关系",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "dist_task",
+      "name": "分发任务",
+      "entity": "分发批次",
+      "fields": [
+        "分发批次",
+        "订阅方",
+        "记录范围",
+        "分发状态",
+        "回执状态"
+      ],
+      "statuses": [
+        "排队中",
+        "分发中",
+        "已送达",
+        "分发失败"
+      ],
+      "actions": [
+        "开始分发",
+        "重试分发"
+      ],
+      "action_targets": [
+        "分发中",
+        "分发失败"
+      ],
+      "metrics": [
+        "批次总数",
+        "已送达批次",
+        "失败批次"
+      ],
+      "desc": "把发布版本分发给订阅方并回收执",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "lineage_graph",
+      "name": "血缘关系图",
+      "entity": "血缘边",
+      "fields": [
+        "血缘边标识",
+        "上游节点",
+        "下游节点",
+        "变换规则",
+        "登记时间"
+      ],
+      "statuses": [
+        "已登记",
+        "待核验",
+        "失效"
+      ],
+      "actions": [
+        "登记血缘",
+        "核验血缘"
+      ],
+      "action_targets": [
+        "已登记",
+        "待核验"
+      ],
+      "metrics": [
+        "边总数",
+        "已登记边",
+        "待核验边"
+      ],
+      "desc": "登记主数据从源到分发的血缘边",
+      "page_shape": "dag-graph",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "quality_rule",
+      "name": "质量规则库",
+      "entity": "质量规则",
+      "fields": [
+        "规则名称",
+        "实体编码",
+        "检查维度",
+        "阈值口径",
+        "严重级别"
+      ],
+      "statuses": [
+        "草稿",
+        "已启用",
+        "已停用"
+      ],
+      "actions": [
+        "启用规则",
+        "停用规则"
+      ],
+      "action_targets": [
+        "已启用",
+        "已停用"
+      ],
+      "metrics": [
+        "规则总数",
+        "启用规则",
+        "今日命中"
+      ],
+      "desc": "定义主数据的质量检查规则与阈值",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "quality_result",
+      "name": "质量报告",
+      "entity": "质量结果",
+      "fields": [
+        "报告批次",
+        "实体编码",
+        "检查总数",
+        "命中数",
+        "评分结果"
+      ],
+      "statuses": [
+        "生成中",
+        "已生成",
+        "生成失败"
+      ],
+      "actions": [
+        "生成报告",
+        "重试生成"
+      ],
+      "action_targets": [
+        "已生成",
+        "生成失败"
+      ],
+      "metrics": [
+        "报告总数",
+        "已生成报告",
+        "失败报告"
+      ],
+      "desc": "按规则维度生成主数据质量报告",
+      "page_shape": "analysis-dashboard",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "merge_review",
+      "name": "合并复核队列",
+      "entity": "复核记录",
+      "fields": [
+        "记录编号",
+        "候选组",
+        "复核结论",
+        "复核角色",
+        "复核时间"
+      ],
+      "statuses": [
+        "待复核",
+        "已通过",
+        "已驳回"
+      ],
+      "actions": [
+        "通过记录",
+        "驳回记录"
+      ],
+      "action_targets": [
+        "已通过",
+        "已驳回"
+      ],
+      "metrics": [
+        "记录总数",
+        "待复核记录",
+        "今日办结"
+      ],
+      "desc": "人工裁决合并冲突的候选组",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "version_rollback",
+      "name": "版本回滚器",
+      "entity": "回滚任务",
+      "fields": [
+        "回滚任务",
+        "目标版本",
+        "回滚原因",
+        "执行状态",
+        "影响订阅方"
+      ],
+      "statuses": [
+        "待执行",
+        "已回滚",
+        "回滚失败"
+      ],
+      "actions": [
+        "执行回滚",
+        "取消任务"
+      ],
+      "action_targets": [
+        "已回滚",
+        "回滚失败"
+      ],
+      "metrics": [
+        "任务总数",
+        "已回滚",
+        "失败任务"
+      ],
+      "desc": "把发布版本回滚到历史版本并通知订阅方",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "sync_cursor",
+      "name": "同步游标",
+      "entity": "游标记录",
+      "fields": [
+        "源系统",
+        "实体编码",
+        "游标值",
+        "推进时间",
+        "回退标记"
+      ],
+      "statuses": [
+        "正常",
+        "游标停滞",
+        "已回退"
+      ],
+      "actions": [
+        "推进游标",
+        "回退游标"
+      ],
+      "action_targets": [
+        "游标停滞",
+        "已回退"
+      ],
+      "metrics": [
+        "游标总数",
+        "正常游标",
+        "停滞游标"
+      ],
+      "desc": "记录抽取作业的同步游标与回退",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "id_cross_map",
+      "name": "标识交叉映射",
+      "entity": "交叉映射",
+      "fields": [
+        "映射批次",
+        "源系统标识",
+        "金记录标识",
+        "映射置信度",
+        "映射状态"
+      ],
+      "statuses": [
+        "待映射",
+        "已映射",
+        "映射失败"
+      ],
+      "actions": [
+        "执行映射",
+        "重试映射"
+      ],
+      "action_targets": [
+        "已映射",
+        "映射失败"
+      ],
+      "metrics": [
+        "批次总数",
+        "已映射数",
+        "失败数"
+      ],
+      "desc": "维护源系统标识到金记录的交叉映射",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "dist_receipt",
+      "name": "分发回执中心",
+      "entity": "回执记录",
+      "fields": [
+        "回执编号",
+        "分发批次",
+        "订阅方",
+        "回执状态",
+        "差异说明"
+      ],
+      "statuses": [
+        "已回收",
+        "部分回收",
+        "未回收"
+      ],
+      "actions": [
+        "重发回执请求",
+        "标记差异"
+      ],
+      "action_targets": [
+        "部分回收",
+        "未回收"
+      ],
+      "metrics": [
+        "回执总数",
+        "已回收",
+        "差异回执"
+      ],
+      "desc": "回收并核对订阅方的分发回执",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "model_change",
+      "name": "实体变更审批",
+      "entity": "变更单",
+      "fields": [
+        "变更单号",
+        "实体编码",
+        "变更内容",
+        "审批状态",
+        "生效版本"
+      ],
+      "statuses": [
+        "起草中",
+        "待审批",
+        "已生效",
+        "已驳回"
+      ],
+      "actions": [
+        "提交审批",
+        "生效变更",
+        "驳回变更"
+      ],
+      "action_targets": [
+        "待审批",
+        "已生效",
+        "已驳回"
+      ],
+      "metrics": [
+        "变更总数",
+        "待审批",
+        "已生效变更"
+      ],
+      "desc": "审批实体模型的变更并管理生效版本",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "stats_overview",
+      "name": "治理看板数据",
+      "entity": "统计快照",
+      "fields": [
+        "统计时间",
+        "实体编码",
+        "金记录数",
+        "重复率",
+        "分发延迟"
+      ],
+      "statuses": [
+        "正常",
+        "指标越界",
+        "数据缺失"
+      ],
+      "actions": [
+        "重算快照",
+        "忽略告警"
+      ],
+      "action_targets": [
+        "指标越界",
+        "数据缺失"
+      ],
+      "metrics": [
+        "快照总数",
+        "正常快照",
+        "越界快照"
+      ],
+      "desc": "统计主数据治理核心指标的时序快照",
+      "page_shape": "analysis-dashboard",
+      "_page_shape_explicit": true
+    },
+    {
+      "key": "ref_data_mgr",
+      "name": "参考数据管理",
+      "entity": "参考数据集",
+      "fields": [
+        "数据集编码",
+        "数据集名称",
+        "码值条目",
+        "生效版本",
+        "映射规则"
+      ],
+      "statuses": [
+        "草稿",
+        "已发布",
+        "已废弃"
+      ],
+      "actions": [
+        "发布数据集",
+        "废弃数据集"
+      ],
+      "action_targets": [
+        "已发布",
+        "已废弃"
+      ],
+      "metrics": [
+        "数据集总数",
+        "发布数据集",
+        "码值总数"
+      ],
+      "desc": "管理参考数据集与码值映射规则",
+      "page_shape": "crud-table",
+      "_page_shape_explicit": true
+    }
+  ]
+}
